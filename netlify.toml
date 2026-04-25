@@ -1,13 +1,2 @@
 [functions]
   directory = "netlify/functions"
-
-[[redirects]]
-  from = "/live/*"
-  to = "http://bluebox.click/live/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
