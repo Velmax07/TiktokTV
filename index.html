@@ -598,12 +598,12 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const PROXY = 'https://corsproxy.io/?';
+const PROXY = 'https://api.allorigins.win/get?url=';
 const BASE_API = 'http://bluebox.click/player_api.php';
 const USERNAME = 'f498c3d8e591bfcf632385adb022e6cb';
 const PASSWORD = '35fadad7f6af80b732c2';
 const API_BASE = `${BASE_API}?username=${USERNAME}&password=${PASSWORD}`;
-const apiFetch = async (action, extra="") => { const r = await fetch(PROXY + encodeURIComponent(`${API_BASE}&action=${action}${extra}`)); return r.json(); };
+const apiFetch = async (action, extra="") => { const r = await fetch(PROXY + encodeURIComponent(`${API_BASE}&action=${action}${extra}`)); const data = await r.json(); return JSON.parse(data.contents); };
 const STREAM = 'http://bluebox.click/live/f498c3d8e591bfcf632385adb022e6cb/35fadad7f6af80b732c2';
 
 let allChannels = [];
