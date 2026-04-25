@@ -598,8 +598,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '/.netlify/functions/api';
-const STREAM = 'https://bluebox.click/live/f498c3d8e591bfcf632385adb022e6cb/35fadad7f6af80b732c2';
+const PROXY = 'https://corsproxy.io/?';
+const BASE_API = 'http://bluebox.click/player_api.php';
+const USERNAME = 'f498c3d8e591bfcf632385adb022e6cb';
+const PASSWORD = '35fadad7f6af80b732c2';
+const API_BASE = `${BASE_API}?username=${USERNAME}&password=${PASSWORD}`;
+const apiFetch = async (action, extra="") => { const r = await fetch(PROXY + encodeURIComponent(`${API_BASE}&action=${action}${extra}`)); return r.json(); };
+const STREAM = 'http://bluebox.click/live/f498c3d8e591bfcf632385adb022e6cb/35fadad7f6af80b732c2';
 
 let allChannels = [];
 let categories = {};
@@ -619,7 +624,7 @@ async function init() {
 
 async function loadCategories() {
   try {
-    const r = await fetch(`${API}?action=get_live_categories`);
+    const r = await apiFetch('get_live_categories');
     const data = await r.json();
     data.forEach(c => { categories[c.category_id] = c.category_name; });
     renderCategories();
@@ -628,7 +633,7 @@ async function loadCategories() {
 
 async function loadChannels() {
   try {
-    const r = await fetch(`${API}?action=get_live_streams`);
+    const r = await apiFetch('get_live_streams');
     allChannels = await r.json();
     renderChannels();
   } catch(e) {
@@ -788,7 +793,7 @@ async function loadEpg(streamId) {
   const panel = document.getElementById('epgPanel');
   panel.innerHTML = '';
   try {
-    const r = await fetch(`${API}?action=get_short_epg&stream_id=${streamId}&limit=5`);
+    const r = await apiFetch('get_short_epg', `&stream_id=${streamId}&limit=5`);
     const data = await r.json();
     const list = data.epg_listings || [];
     if (list.length === 0) return;
