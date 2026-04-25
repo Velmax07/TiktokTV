@@ -1,929 +1,195 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0a0a0f" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>TV Online</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV Online • Proxy Público</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --bg2: #111118;
-    --bg3: #1a1a24;
-    --accent: #e63946;
-    --accent2: #ff6b6b;
-    --gold: #ffd166;
-    --text: #f0f0f5;
-    --text2: #9090a8;
-    --card: #16161e;
-    --border: #2a2a3a;
-    --radius: 12px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: linear-gradient(180deg, var(--bg) 80%, transparent);
-    padding: calc(var(--safe-top) + 14px) 16px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 2px;
-    background: linear-gradient(135deg, var(--accent), var(--gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    flex-shrink: 0;
-  }
-
-  .search-bar {
-    flex: 1;
-    position: relative;
-  }
-
-  .search-bar input {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 9px 16px 9px 38px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .search-bar input:focus { border-color: var(--accent); }
-  .search-bar input::placeholder { color: var(--text2); }
-
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text2);
-    font-size: 15px;
-    pointer-events: none;
-  }
-
-  /* ── CATEGORIES ── */
-  .cat-scroll {
-    display: flex;
-    gap: 8px;
-    padding: 4px 16px 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .cat-scroll::-webkit-scrollbar { display: none; }
-
-  .cat-pill {
-    flex-shrink: 0;
-    padding: 7px 16px;
-    border-radius: 50px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .cat-pill.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-
-  /* ── RECENTLY WATCHED ── */
-  .section { padding: 0 0 20px; }
-
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 1px;
-    color: var(--text);
-    padding: 0 16px 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title .dot {
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  .recent-scroll {
-    display: flex;
-    gap: 10px;
-    padding: 0 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .recent-scroll::-webkit-scrollbar { display: none; }
-
-  .recent-card {
-    flex-shrink: 0;
-    width: 120px;
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--card);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.2s;
-  }
-  .recent-card:active { transform: scale(0.95); }
-
-  .recent-card img {
-    width: 100%;
-    height: 68px;
-    object-fit: contain;
-    background: var(--bg3);
-    padding: 8px;
-  }
-
-  .recent-card .rc-name {
-    padding: 6px 8px;
-    font-size: 11px;
-    color: var(--text2);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .recent-card .play-badge {
-    position: absolute;
-    top: 6px; right: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px;
-  }
-
-  /* ── CHANNEL GRID ── */
-  .channels-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    padding: 0 16px;
-  }
-
-  .channel-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.15s, border-color 0.2s;
-    aspect-ratio: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 6px;
-  }
-
-  .channel-card:active { transform: scale(0.93); }
-  .channel-card.fav { border-color: var(--gold); }
-
-  .channel-card img {
-    width: 58px;
-    height: 38px;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
-  }
-
-  .channel-card .ch-name {
-    font-size: 10px;
-    color: var(--text2);
-    text-align: center;
-    line-height: 1.3;
-    max-height: 28px;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
-  .fav-btn {
-    position: absolute;
-    top: 5px; right: 5px;
-    font-size: 13px;
-    line-height: 1;
-    color: var(--border);
-    cursor: pointer;
-    z-index: 2;
-    padding: 4px;
-    transition: color 0.2s, transform 0.2s;
-  }
-  .fav-btn.active { color: var(--gold); transform: scale(1.2); }
-
-  /* ── SKELETON ── */
-  .skeleton {
-    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: var(--radius);
-  }
-  @keyframes shimmer { to { background-position: -200% 0; } }
-
-  .sk-card {
-    aspect-ratio: 1;
-    border-radius: var(--radius);
-  }
-
-  /* ── PLAYER OVERLAY ── */
-  .player-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    background: #000;
-    display: none;
-    flex-direction: column;
-  }
-  .player-overlay.show { display: flex; }
-
-  .player-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: calc(var(--safe-top) + 12px) 16px 12px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 10;
-  }
-
-  .back-btn {
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    font-size: 18px;
-    flex-shrink: 0;
-    backdrop-filter: blur(4px);
-  }
-
-  .player-ch-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 1px;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .fav-player-btn {
-    font-size: 22px;
-    cursor: pointer;
-    padding: 4px;
-    color: var(--border);
-    transition: color 0.2s;
-  }
-  .fav-player-btn.active { color: var(--gold); }
-
-  #videoEl {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-  }
-
-  .player-error {
-    position: absolute;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text2);
-    font-size: 14px;
-    text-align: center;
-    padding: 24px;
-  }
-  .player-error.show { display: flex; }
-  .player-error .err-icon { font-size: 48px; }
-  .player-error .retry-btn {
-    margin-top: 8px;
-    padding: 10px 28px;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .player-loader {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.6);
-    display: none;
-  }
-  .player-loader.show { display: flex; }
-
-  .spinner {
-    width: 42px; height: 42px;
-    border: 3px solid rgba(255,255,255,0.15);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── EPG PANEL ── */
-  .epg-panel {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 100%);
-    padding: 60px 16px calc(var(--safe-bottom) + 16px);
-    max-height: 45%;
-    overflow-y: auto;
-    scrollbar-width: none;
-    transition: opacity 0.3s;
-  }
-  .epg-panel::-webkit-scrollbar { display: none; }
-
-  .epg-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 16px;
-    letter-spacing: 1px;
-    color: var(--text2);
-    margin-bottom: 10px;
-  }
-
-  .epg-item {
-    display: flex;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-
-  .epg-time {
-    font-size: 12px;
-    color: var(--accent2);
-    font-weight: 600;
-    flex-shrink: 0;
-    width: 50px;
-  }
-
-  .epg-name {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.4;
-  }
-
-  /* ── EMPTY / NO RESULTS ── */
-  .empty-state {
-    padding: 48px 16px;
-    text-align: center;
-    color: var(--text2);
-    font-size: 14px;
-    display: none;
-  }
-  .empty-state .em-icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state.show { display: block; }
-
-  /* ── BOTTOM NAV ── */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    display: flex;
-    padding-bottom: var(--safe-bottom);
-    z-index: 100;
-  }
-
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 10px 0;
-    color: var(--text2);
-    font-size: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .nav-item.active { color: var(--accent); }
-  .nav-item .nav-icon { font-size: 20px; }
-
-  .main-content {
-    padding-bottom: calc(60px + var(--safe-bottom));
-  }
-
-  /* ── LIVE BADGE ── */
-  .live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 6px;
-    vertical-align: middle;
-  }
-  .live-dot {
-    width: 5px; height: 5px;
-    background: #fff;
-    border-radius: 50%;
-    animation: blink 1s infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 999;
-    opacity: 0;
-    transition: all 0.3s;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* ── COUNT BADGE ── */
-  .count-badge {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 50px;
-    margin-left: 6px;
-    vertical-align: middle;
-  }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;}
+.logo{font-size:24px;font-weight:bold;background:linear-gradient(135deg,#e63946,#ffd166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px;}
+.player{background:#000;border-radius:12px;margin-bottom:20px;border:1px solid #333;}
+.player-header{background:#111;padding:12px;border-bottom:1px solid #333;}
+.live{color:#e63946;font-size:12px;font-weight:bold;}
+.ch-name{color:#ffd166;margin-left:10px;}
+.video-container{height:400px;position:relative;background:#000;}
+video{width:100%;height:100%;object-fit:contain;}
+.loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;}
+.loader.show{display:block;}
+.spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#e63946;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.search{width:100%;padding:10px;background:#1a1a24;border:1px solid #333;border-radius:50px;color:#fff;margin-bottom:16px;}
+.channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin-top:16px;margin-bottom:80px;}
+.channel-card{background:#16161e;border:1px solid #333;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:0.2s;position:relative;}
+.channel-card:hover{border-color:#e63946;}
+.channel-card.active{border:2px solid #e63946;}
+.channel-img{height:60px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#8B0000,#B22222);border-radius:8px;margin-bottom:6px;}
+.channel-img img{max-width:80%;max-height:50px;}
+.ch-name-small{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#ffd166;z-index:1;}
+.status{font-size:12px;color:#888;margin-bottom:16px;padding:8px;background:#111;border-radius:8px;text-align:center;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a24;padding:8px 16px;border-radius:50px;font-size:12px;z-index:1000;opacity:0;transition:0.3s;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="logo">📺 TV Online</div>
-  <div class="search-bar">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Buscar canal..." autocomplete="off" />
+<div class="logo">📺 TV Online • Proxy Público</div>
+<div class="status" id="status">🔄 Carregando canais...</div>
+
+<div class="player">
+  <div class="player-header">
+    <span class="live">🔴 AO VIVO</span>
+    <span class="ch-name" id="channelName">Selecione um canal</span>
+  </div>
+  <div class="video-container">
+    <video id="video" playsinline></video>
+    <div class="loader" id="loader"><div class="spinner"></div></div>
   </div>
 </div>
 
-<!-- CATEGORIES -->
-<div class="cat-scroll" id="catScroll">
-  <div class="cat-pill active" data-id="all">Todos</div>
-  <div class="cat-pill" data-id="fav">⭐ Favoritos</div>
-</div>
-
-<!-- MAIN CONTENT -->
-<div class="main-content" id="mainContent">
-
-  <!-- RECENTLY WATCHED -->
-  <div class="section" id="recentSection" style="display:none">
-    <div class="section-title"><span class="dot"></span> Assistidos Recentemente</div>
-    <div class="recent-scroll" id="recentScroll"></div>
-  </div>
-
-  <!-- CHANNELS -->
-  <div class="section">
-    <div class="section-title" id="channelSectionTitle">
-      <span class="dot"></span> Canais
-      <span class="live-badge"><span class="live-dot"></span>AO VIVO</span>
-    </div>
-    <div class="channels-grid" id="channelsGrid">
-      <!-- skeletons -->
-      ${Array(12).fill('<div class="skeleton sk-card"></div>').join('')}
-    </div>
-    <div class="empty-state" id="emptyState">
-      <div class="em-icon">📡</div>
-      Nenhum canal encontrado
-    </div>
-  </div>
-
-</div>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <div class="nav-item active" id="navHome" onclick="setTab('home')">
-    <span class="nav-icon">🏠</span>Início
-  </div>
-  <div class="nav-item" id="navFavs" onclick="setTab('favs')">
-    <span class="nav-icon">⭐</span>Favoritos
-  </div>
-  <div class="nav-item" id="navSearch" onclick="document.getElementById('searchInput').focus()">
-    <span class="nav-icon">🔍</span>Buscar
-  </div>
-</div>
-
-<!-- PLAYER OVERLAY -->
-<div class="player-overlay" id="playerOverlay">
-  <video id="videoEl" playsinline autoplay></video>
-
-  <div class="player-loader" id="playerLoader">
-    <div class="spinner"></div>
-  </div>
-
-  <div class="player-error" id="playerError">
-    <div class="err-icon">📡</div>
-    <div>Erro ao carregar o canal.<br>Verifique sua conexão.</div>
-    <div class="retry-btn" onclick="retryStream()">Tentar novamente</div>
-  </div>
-
-  <div class="player-top">
-    <div class="back-btn" onclick="closePlayer()">‹</div>
-    <div class="player-ch-name" id="playerChName"></div>
-    <div class="fav-player-btn" id="favPlayerBtn" onclick="toggleFavFromPlayer()">☆</div>
-  </div>
-
-  <div class="epg-panel" id="epgPanel"></div>
-</div>
-
-<!-- TOAST -->
+<input type="text" class="search" id="search" placeholder="🔍 Buscar canal...">
+<div id="channelsGrid" class="channels-grid"></div>
 <div class="toast" id="toast"></div>
 
 <script>
+// CONFIGURAÇÃO
+const USERNAME = 'f498c3d8e591bfcf632385adb022e6cb';
+const PASSWORD = '35fadad7f6af80b732c2';
 
-const API = '/.netlify/functions/api';
-const STREAM_BASE = 'http://bluebox.click/live/f498c3d8e591bfcf632385adb022e6cb/35fadad7f6af80b732c2';
-const STREAM_PROXY = '/.netlify/functions/stream?url=';
+// Usando CORS proxy público (allorigins)
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-const apiFetch = async (action, extra = '') => {
-  const r = await fetch(`${API}?action=${action}${extra}`);
-  return r.json();
-};
-
-let allChannels = [];
-let categories = {};
-let favorites = JSON.parse(localStorage.getItem('tvFavs') || '[]');
-let recentlyWatched = JSON.parse(localStorage.getItem('tvRecent') || '[]');
-let currentCat = 'all';
-let currentSearch = '';
+let channels = [];
+let favorites = JSON.parse(localStorage.getItem('favs') || '[]');
 let currentChannel = null;
 let hls = null;
 
-// ── INIT ──
-async function init() {
-  await loadCategories();
-  await loadChannels();
-  renderRecent();
-}
-
-async function loadCategories() {
-  try {
-    const data = await apiFetch('get_live_categories');
-    data.forEach(c => { categories[c.category_id] = c.category_name; });
-    renderCategories();
-  } catch(e) {}
-}
-
 async function loadChannels() {
   try {
-    const data = await apiFetch('get_live_streams');
-    allChannels = data;
+    const apiUrl = `http://bluebox.click/player_api.php?username=${USERNAME}&password=${PASSWORD}&action=get_live_streams`;
+    const response = await fetch(CORS_PROXY + encodeURIComponent(apiUrl));
+    const text = await response.text();
+    channels = JSON.parse(text);
+    document.getElementById('status').innerHTML = `✅ ${channels.length} canais carregados! Clique em um para assistir.`;
     renderChannels();
+    
+    if (channels.length > 0) {
+      selectChannel(channels[0].stream_id);
+    }
   } catch(e) {
-    document.getElementById('channelsGrid').innerHTML = '';
-    showToast('Erro ao carregar canais. Tente recarregar.');
+    console.error(e);
+    document.getElementById('status').innerHTML = `❌ Erro: ${e.message}<br>Tentando novamente em 3 segundos...`;
+    setTimeout(loadChannels, 3000);
   }
-}
-
-function renderCategories() {
-  const scroll = document.getElementById('catScroll');
-  const extra = Object.entries(categories).map(([id, name]) =>
-    `<div class="cat-pill" data-id="${id}" onclick="filterCat('${id}')">${name}</div>`
-  ).join('');
-  scroll.innerHTML = `
-    <div class="cat-pill active" data-id="all" onclick="filterCat('all')">Todos</div>
-    <div class="cat-pill" data-id="fav" onclick="filterCat('fav')">⭐ Favoritos</div>
-    ${extra}
-  `;
 }
 
 function renderChannels() {
-  let list = [...allChannels];
-
-  if (currentCat === 'fav') {
-    list = list.filter(c => favorites.includes(String(c.stream_id)));
-  } else if (currentCat !== 'all') {
-    list = list.filter(c => String(c.category_id) === currentCat);
+  let list = [...channels];
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  if (searchTerm) {
+    list = list.filter(c => c.name.toLowerCase().includes(searchTerm));
   }
-
-  if (currentSearch) {
-    const q = currentSearch.toLowerCase();
-    list = list.filter(c => c.name.toLowerCase().includes(q));
-  }
-
-  const title = document.getElementById('channelSectionTitle');
-  const count = list.length;
-  title.innerHTML = `<span class="dot"></span> Canais <span class="count-badge">${count}</span> <span class="live-badge"><span class="live-dot"></span>AO VIVO</span>`;
-
+  
   const grid = document.getElementById('channelsGrid');
-  const empty = document.getElementById('emptyState');
-
-  if (list.length === 0) {
-    grid.innerHTML = '';
-    empty.classList.add('show');
-    return;
-  }
-  empty.classList.remove('show');
-
   grid.innerHTML = list.map(ch => {
     const isFav = favorites.includes(String(ch.stream_id));
-    const logo = ch.stream_icon && ch.stream_icon !== 'flussonic' ? ch.stream_icon : '';
-    const initials = ch.name.substring(0, 2).toUpperCase();
-    const imgHtml = logo
-      ? `<img src="${logo}" alt="${ch.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy" /><div style="display:none;font-size:18px;font-weight:700;color:var(--text2)">${initials}</div>`
-      : `<div style="font-size:18px;font-weight:700;color:var(--text2)">${initials}</div>`;
-
+    const isActive = currentChannel && currentChannel.stream_id == ch.stream_id;
+    const logo = ch.stream_icon && ch.stream_icon !== 'flussonic' ? ch.stream_icon : null;
+    
     return `
-      <div class="channel-card ${isFav ? 'fav' : ''}" onclick="openChannel(${ch.stream_id}, '${escHtml(ch.name)}', '${escHtml(logo)}')">
-        <span class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav(${ch.stream_id},this)">
-          ${isFav ? '★' : '☆'}
-        </span>
-        ${imgHtml}
-        <div class="ch-name">${cleanName(ch.name)}</div>
+      <div class="channel-card ${isActive ? 'active' : ''}" onclick="selectChannel(${ch.stream_id})">
+        <div class="fav-btn" onclick="event.stopPropagation();toggleFav(${ch.stream_id})">${isFav ? '★' : '☆'}</div>
+        <div class="channel-img">
+          ${logo ? `<img src="${logo}" onerror="this.style.display='none'">` : '<span>📺</span>'}
+        </div>
+        <div class="ch-name-small">${ch.name.substring(0, 20)}</div>
       </div>
     `;
   }).join('');
 }
 
-function renderRecent() {
-  const section = document.getElementById('recentSection');
-  const scroll = document.getElementById('recentScroll');
-  if (recentlyWatched.length === 0) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  scroll.innerHTML = recentlyWatched.slice(0, 10).map(ch => `
-    <div class="recent-card" onclick="openChannel(${ch.id}, '${escHtml(ch.name)}', '${escHtml(ch.logo)}')">
-      <span class="play-badge">▶</span>
-      ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.src=''" loading="lazy" />` : `<div style="height:68px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--text2)">${ch.name.substring(0,2).toUpperCase()}</div>`}
-      <div class="rc-name">${cleanName(ch.name)}</div>
-    </div>
-  `).join('');
-}
-
-// ── PLAYER ──
-function openChannel(id, name, logo) {
-  currentChannel = { id, name, logo };
-  document.getElementById('playerOverlay').classList.add('show');
-  document.getElementById('playerChName').textContent = cleanName(name);
-  document.getElementById('playerError').classList.remove('show');
-  document.getElementById('playerLoader').classList.add('show');
-
-  const isFav = favorites.includes(String(id));
-  const favBtn = document.getElementById('favPlayerBtn');
-  favBtn.textContent = isFav ? '★' : '☆';
-  favBtn.classList.toggle('active', isFav);
-
-  const url = STREAM_PROXY + encodeURIComponent(`${STREAM_BASE}/${id}.m3u8`);
-  playStream(url);
-  loadEpg(id);
-  addToRecent({ id, name, logo });
-  document.body.style.overflow = 'hidden';
-}
-
-function playStream(url) {
-  const video = document.getElementById('videoEl');
-  document.getElementById('playerError').classList.remove('show');
-  document.getElementById('playerLoader').classList.add('show');
-
-  if (hls) { hls.destroy(); hls = null; }
-
+async function selectChannel(streamId) {
+  const channel = channels.find(c => c.stream_id == streamId);
+  if (!channel) return;
+  
+  currentChannel = channel;
+  document.getElementById('channelName').textContent = channel.name;
+  renderChannels();
+  
+  const streamUrl = `http://bluebox.click/live/${USERNAME}/${PASSWORD}/${channel.stream_id}`;
+  
+  // Tenta reproduzir diretamente (pode funcionar em alguns navegadores)
+  const video = document.getElementById('video');
+  const loader = document.getElementById('loader');
+  
+  loader.classList.add('show');
+  
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+  
+  video.pause();
+  video.src = '';
+  
+  // Tenta HLS.js primeiro
   if (Hls.isSupported()) {
     hls = new Hls({ enableWorker: false, lowLatencyMode: true });
-    hls.loadSource(url);
+    hls.loadSource(streamUrl);
     hls.attachMedia(video);
+    
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {});
-      document.getElementById('playerLoader').classList.remove('show');
+      video.play().catch(e => console.log(e));
+      loader.classList.remove('show');
+      showToast(`▶️ ${channel.name}`);
     });
+    
     hls.on(Hls.Events.ERROR, (_, data) => {
       if (data.fatal) {
-        document.getElementById('playerLoader').classList.remove('show');
-        document.getElementById('playerError').classList.add('show');
+        console.error('HLS Error:', data);
+        loader.classList.remove('show');
+        showToast('❌ Stream offline, tente outro canal');
       }
     });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = url;
+  } else {
+    video.src = streamUrl;
     video.addEventListener('loadedmetadata', () => {
-      video.play().catch(() => {});
-      document.getElementById('playerLoader').classList.remove('show');
-    }, { once: true });
+      video.play().catch(e => console.log(e));
+      loader.classList.remove('show');
+    });
     video.addEventListener('error', () => {
-      document.getElementById('playerLoader').classList.remove('show');
-      document.getElementById('playerError').classList.add('show');
-    }, { once: true });
-  } else {
-    document.getElementById('playerLoader').classList.remove('show');
-    document.getElementById('playerError').classList.add('show');
+      loader.classList.remove('show');
+      showToast('❌ Stream offline');
+    });
   }
 }
 
-function retryStream() {
-  if (!currentChannel) return;
-  document.getElementById('playerError').classList.remove('show');
-  playStream(STREAM_PROXY + encodeURIComponent(`${STREAM_BASE}/${currentChannel.id}.m3u8`));
-}
-
-function closePlayer() {
-  document.getElementById('playerOverlay').classList.remove('show');
-  const video = document.getElementById('videoEl');
-  video.pause();
-  if (hls) { hls.destroy(); hls = null; }
-  video.src = '';
-  document.getElementById('epgPanel').innerHTML = '';
-  document.body.style.overflow = '';
-}
-
-async function loadEpg(streamId) {
-  const panel = document.getElementById('epgPanel');
-  panel.innerHTML = '';
-  try {
-    const data = await apiFetch('get_short_epg', `&stream_id=${streamId}&limit=5`);
-    const list = data.epg_listings || [];
-    if (list.length === 0) return;
-
-    panel.innerHTML = `<div class="epg-title">📺 Programação</div>` +
-      list.map(p => {
-        const title = safeB64(p.title);
-        const time = formatEpgTime(p.start);
-        return `<div class="epg-item"><div class="epg-time">${time}</div><div class="epg-name">${title}</div></div>`;
-      }).join('');
-  } catch(e) {}
-}
-
-// ── FAVORITES ──
-function toggleFav(id, el) {
-  const sid = String(id);
+function toggleFav(streamId) {
+  const sid = String(streamId);
   const idx = favorites.indexOf(sid);
   if (idx === -1) {
     favorites.push(sid);
-    el.textContent = '★';
-    el.classList.add('active');
-    el.closest('.channel-card').classList.add('fav');
-    showToast('Adicionado aos favoritos ⭐');
+    showToast('⭐ Adicionado');
   } else {
     favorites.splice(idx, 1);
-    el.textContent = '☆';
-    el.classList.remove('active');
-    el.closest('.channel-card').classList.remove('fav');
-    showToast('Removido dos favoritos');
+    showToast('🗑️ Removido');
   }
-  localStorage.setItem('tvFavs', JSON.stringify(favorites));
-  if (currentCat === 'fav') renderChannels();
-}
-
-function toggleFavFromPlayer() {
-  if (!currentChannel) return;
-  const sid = String(currentChannel.id);
-  const idx = favorites.indexOf(sid);
-  const btn = document.getElementById('favPlayerBtn');
-  if (idx === -1) {
-    favorites.push(sid);
-    btn.textContent = '★';
-    btn.classList.add('active');
-    showToast('Adicionado aos favoritos ⭐');
-  } else {
-    favorites.splice(idx, 1);
-    btn.textContent = '☆';
-    btn.classList.remove('active');
-    showToast('Removido dos favoritos');
-  }
-  localStorage.setItem('tvFavs', JSON.stringify(favorites));
+  localStorage.setItem('favs', JSON.stringify(favorites));
   renderChannels();
-}
-
-// ── RECENTLY WATCHED ──
-function addToRecent(ch) {
-  recentlyWatched = recentlyWatched.filter(r => r.id !== ch.id);
-  recentlyWatched.unshift(ch);
-  recentlyWatched = recentlyWatched.slice(0, 15);
-  localStorage.setItem('tvRecent', JSON.stringify(recentlyWatched));
-  renderRecent();
-}
-
-// ── FILTER / SEARCH ──
-function filterCat(id) {
-  currentCat = id;
-  document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.id === id));
-  renderChannels();
-  if (id === 'fav') {
-    document.getElementById('navFavs').classList.add('active');
-    document.getElementById('navHome').classList.remove('active');
-  } else {
-    document.getElementById('navHome').classList.add('active');
-    document.getElementById('navFavs').classList.remove('active');
-  }
-}
-
-function setTab(tab) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (tab === 'home') {
-    document.getElementById('navHome').classList.add('active');
-    filterCat('all');
-  } else if (tab === 'favs') {
-    document.getElementById('navFavs').classList.add('active');
-    filterCat('fav');
-  }
-}
-
-document.getElementById('searchInput').addEventListener('input', e => {
-  currentSearch = e.target.value.trim();
-  renderChannels();
-});
-
-// ── UTILS ──
-function cleanName(name) {
-  return name.replace(/[\u1D00-\u1DBF\u1D00-\u1D7F\u2070-\u209F\u00B2-\u00B3\u00B9]+/g, '').trim();
-}
-
-function escHtml(str) {
-  return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-}
-
-function safeB64(str) {
-  try { return atob(str); } catch(e) { return str; }
-}
-
-function formatEpgTime(raw) {
-  try {
-    const d = new Date(raw.replace(' ', 'T') + 'Z');
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  } catch(e) { return raw.substring(11, 16); }
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-// Handle back button
-window.addEventListener('popstate', () => {
-  if (document.getElementById('playerOverlay').classList.contains('show')) closePlayer();
-});
+document.getElementById('search').addEventListener('input', () => renderChannels());
 
-document.getElementById('playerOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('playerOverlay')) closePlayer();
-});
-
-init();
+loadChannels();
 </script>
 </body>
 </html>
