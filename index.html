@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TV Online • Proxy Público</title>
+<title>TV Online • Teste</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -18,24 +18,27 @@ video{width:100%;height:100%;object-fit:contain;}
 .loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;}
 .loader.show{display:block;}
 .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#e63946;border-radius:50%;animation:spin 1s linear infinite;}
+.error-msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;display:none;background:rgba(0,0,0,0.9);padding:20px;border-radius:12px;}
+.error-msg.show{display:block;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .search{width:100%;padding:10px;background:#1a1a24;border:1px solid #333;border-radius:50px;color:#fff;margin-bottom:16px;}
-.channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin-top:16px;margin-bottom:80px;}
+.channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin-top:16px;}
 .channel-card{background:#16161e;border:1px solid #333;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:0.2s;position:relative;}
 .channel-card:hover{border-color:#e63946;}
 .channel-card.active{border:2px solid #e63946;}
 .channel-img{height:60px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#8B0000,#B22222);border-radius:8px;margin-bottom:6px;}
 .channel-img img{max-width:80%;max-height:50px;}
 .ch-name-small{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#ffd166;z-index:1;}
-.status{font-size:12px;color:#888;margin-bottom:16px;padding:8px;background:#111;border-radius:8px;text-align:center;}
+.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#ffd166;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a24;padding:8px 16px;border-radius:50px;font-size:12px;z-index:1000;opacity:0;transition:0.3s;}
 .toast.show{opacity:1;}
+.status{font-size:12px;color:#888;margin-bottom:16px;padding:8px;background:#111;border-radius:8px;text-align:center;}
+@media (max-width:600px){.video-container{height:250px;}}
 </style>
 </head>
 <body>
 
-<div class="logo">📺 TV Online • Proxy Público</div>
+<div class="logo">📺 TV Online • Teste</div>
 <div class="status" id="status">🔄 Carregando canais...</div>
 
 <div class="player">
@@ -46,10 +49,15 @@ video{width:100%;height:100%;object-fit:contain;}
   <div class="video-container">
     <video id="video" playsinline></video>
     <div class="loader" id="loader"><div class="spinner"></div></div>
+    <div class="error-msg" id="errorMsg">
+      <p>❌ Falha ao carregar</p>
+      <button onclick="retryStream()" style="background:#e63946;border:none;padding:8px 16px;border-radius:50px;color:#fff;margin-top:8px;cursor:pointer;">Tentar novamente</button>
+    </div>
   </div>
 </div>
 
 <input type="text" class="search" id="search" placeholder="🔍 Buscar canal...">
+
 <div id="channelsGrid" class="channels-grid"></div>
 <div class="toast" id="toast"></div>
 
@@ -57,21 +65,23 @@ video{width:100%;height:100%;object-fit:contain;}
 // CONFIGURAÇÃO
 const USERNAME = 'f498c3d8e591bfcf632385adb022e6cb';
 const PASSWORD = '35fadad7f6af80b732c2';
-
-// Usando CORS proxy público (allorigins)
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const PROXY = 'player.php?url=';
 
 let channels = [];
 let favorites = JSON.parse(localStorage.getItem('favs') || '[]');
 let currentChannel = null;
 let hls = null;
+let retryCount = 0;
 
+// Carregar canais
 async function loadChannels() {
   try {
-    const apiUrl = `http://bluebox.click/player_api.php?username=${USERNAME}&password=${PASSWORD}&action=get_live_streams`;
-    const response = await fetch(CORS_PROXY + encodeURIComponent(apiUrl));
-    const text = await response.text();
-    channels = JSON.parse(text);
+    const url = `http://bluebox.click/player_api.php?username=${USERNAME}&password=${PASSWORD}&action=get_live_streams`;
+    const response = await fetch(PROXY + encodeURIComponent(url));
+    
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    channels = await response.json();
     document.getElementById('status').innerHTML = `✅ ${channels.length} canais carregados! Clique em um para assistir.`;
     renderChannels();
     
@@ -80,8 +90,7 @@ async function loadChannels() {
     }
   } catch(e) {
     console.error(e);
-    document.getElementById('status').innerHTML = `❌ Erro: ${e.message}<br>Tentando novamente em 3 segundos...`;
-    setTimeout(loadChannels, 3000);
+    document.getElementById('status').innerHTML = `❌ Erro: ${e.message}<br>Verifique se o player.php está no servidor.`;
   }
 }
 
@@ -115,16 +124,26 @@ async function selectChannel(streamId) {
   if (!channel) return;
   
   currentChannel = channel;
+  retryCount = 0;
   document.getElementById('channelName').textContent = channel.name;
+  document.getElementById('errorMsg').classList.remove('show');
   renderChannels();
   
   const streamUrl = `http://bluebox.click/live/${USERNAME}/${PASSWORD}/${channel.stream_id}`;
+  const proxyUrl = PROXY + encodeURIComponent(streamUrl);
   
-  // Tenta reproduzir diretamente (pode funcionar em alguns navegadores)
+  console.log('Stream URL:', proxyUrl);
+  showToast(`▶️ ${channel.name}`);
+  playStream(proxyUrl);
+}
+
+function playStream(url) {
   const video = document.getElementById('video');
   const loader = document.getElementById('loader');
+  const errorDiv = document.getElementById('errorMsg');
   
   loader.classList.add('show');
+  errorDiv.classList.remove('show');
   
   if (hls) {
     hls.destroy();
@@ -134,36 +153,45 @@ async function selectChannel(streamId) {
   video.pause();
   video.src = '';
   
-  // Tenta HLS.js primeiro
   if (Hls.isSupported()) {
     hls = new Hls({ enableWorker: false, lowLatencyMode: true });
-    hls.loadSource(streamUrl);
+    hls.loadSource(url);
     hls.attachMedia(video);
     
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
       video.play().catch(e => console.log(e));
       loader.classList.remove('show');
-      showToast(`▶️ ${channel.name}`);
     });
     
     hls.on(Hls.Events.ERROR, (_, data) => {
       if (data.fatal) {
-        console.error('HLS Error:', data);
         loader.classList.remove('show');
-        showToast('❌ Stream offline, tente outro canal');
+        if (retryCount < 2) {
+          retryCount++;
+          setTimeout(() => playStream(url), 2000);
+        } else {
+          errorDiv.classList.add('show');
+        }
       }
     });
   } else {
-    video.src = streamUrl;
+    video.src = url;
+    video.addEventListener('error', () => {
+      loader.classList.remove('show');
+      errorDiv.classList.add('show');
+    });
     video.addEventListener('loadedmetadata', () => {
       video.play().catch(e => console.log(e));
       loader.classList.remove('show');
     });
-    video.addEventListener('error', () => {
-      loader.classList.remove('show');
-      showToast('❌ Stream offline');
-    });
   }
+}
+
+function retryStream() {
+  if (!currentChannel) return;
+  retryCount = 0;
+  const streamUrl = `http://bluebox.click/live/${USERNAME}/${PASSWORD}/${currentChannel.stream_id}`;
+  playStream(PROXY + encodeURIComponent(streamUrl));
 }
 
 function toggleFav(streamId) {
