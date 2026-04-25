@@ -12,23 +12,15 @@ function fetchUrl(targetUrl) {
       path: parsed.path,
       method: 'GET',
       rejectUnauthorized: false,
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': '*/*',
-      }
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }
     };
     const req = lib.request(options, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // Segue redirect
         return fetchUrl(res.headers.location).then(resolve).catch(reject);
       }
       const chunks = [];
       res.on('data', chunk => chunks.push(chunk));
-      res.on('end', () => resolve({
-        data: Buffer.concat(chunks),
-        headers: res.headers,
-        status: res.statusCode
-      }));
+      res.on('end', () => resolve({ data: Buffer.concat(chunks), headers: res.headers }));
     });
     req.on('error', reject);
     req.setTimeout(9000, () => { req.destroy(); reject(new Error('Timeout')); });
@@ -36,16 +28,22 @@ function fetchUrl(targetUrl) {
   });
 }
 
-function rewriteM3u8(content, originalUrl, proxyBase) {
+function rewriteM3u8ToHttps(content, originalUrl) {
+  // Converte URLs relativas para absolutas e http:// para https://
   const parsed = url.parse(originalUrl);
   const base = `${parsed.protocol}//${parsed.host}${parsed.pathname.substring(0, parsed.pathname.lastIndexOf('/') + 1)}`;
-  
+
   return content.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) return line;
-    // URL absoluta ou relativa - sempre proxear
+    // URL relativa → absoluta
     const absUrl = trimmed.startsWith('http') ? trimmed : base + trimmed;
-    return proxyBase + encodeURIComponent(absUrl);
+    // Se for outro m3u8 (playlist de variantes), ainda proxeia
+    if (absUrl.includes('.m3u8')) {
+      return `/.netlify/functions/stream?url=${encodeURIComponent(absUrl)}`;
+    }
+    // Segmento (.ts, etc.) → só converte http para https para o browser buscar direto
+    return absUrl.replace(/^http:\/\//, 'https://');
   }).join('\n');
 }
 
@@ -60,15 +58,15 @@ exports.handler = async (event) => {
   };
 
   try {
-    const { data, headers, status } = await fetchUrl(targetUrl);
+    const { data, headers } = await fetchUrl(targetUrl);
     const contentType = headers['content-type'] || '';
-    const isM3u8 = contentType.includes('mpegurl') || 
-                   targetUrl.includes('.m3u8') || 
-                   data.toString().startsWith('#EXTM3U');
+    const text = data.toString('utf8');
+    const isM3u8 = contentType.includes('mpegurl') ||
+                   targetUrl.includes('.m3u8') ||
+                   text.startsWith('#EXTM3U');
 
     if (isM3u8) {
-      const proxyBase = `/.netlify/functions/stream?url=`;
-      const rewritten = rewriteM3u8(data.toString('utf8'), targetUrl, proxyBase);
+      const rewritten = rewriteM3u8ToHttps(text, targetUrl);
       return {
         statusCode: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/vnd.apple.mpegurl' },
@@ -76,13 +74,9 @@ exports.handler = async (event) => {
       };
     }
 
-    // Segmento binário (.ts, etc)
     return {
-      statusCode: status || 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': contentType || 'video/MP2T',
-      },
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': contentType || 'video/MP2T' },
       body: data.toString('base64'),
       isBase64Encoded: true,
     };
