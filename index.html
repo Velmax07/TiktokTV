@@ -1,331 +1,748 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>TV Online • IPTV</title>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0a0a0f;color:#fff;font-family:system-ui,sans-serif;padding:16px;padding-bottom:80px;}
-.header{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
-.logo{font-size:24px;font-weight:bold;background:linear-gradient(135deg,#e63946,#ffd166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.search{flex:1;padding:10px 16px;background:#1a1a24;border:1px solid #2a2a3a;border-radius:50px;color:#fff;font-size:14px;}
-.search:focus{outline:none;border-color:#e63946;}
-.player{background:#000;border-radius:12px;overflow:hidden;margin-bottom:20px;border:1px solid #2a2a3a;}
-.player-header{background:#111;padding:12px 16px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #2a2a3a;}
-.live{background:#e63946;color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:bold;}
-.ch-name{color:#ffd166;font-weight:bold;flex:1;}
-.close-player{background:#333;border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:18px;}
-.video-container{width:100%;height:400px;background:#000;position:relative;}
-video{width:100%;height:100%;object-fit:contain;}
-.loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;}
-.loader.show{display:block;}
-.spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#e63946;border-radius:50%;animation:spin 1s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.error-msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;display:none;}
-.error-msg.show{display:block;}
-.cat-scroll{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;}
-.cat-scroll::-webkit-scrollbar{display:none;}
-.cat-pill{background:#1a1a24;border:1px solid #2a2a3a;padding:6px 14px;border-radius:50px;font-size:12px;cursor:pointer;white-space:nowrap;}
-.cat-pill.active{background:#e63946;border-color:#e63946;}
-.channels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin-top:16px;}
-.channel-card{background:#16161e;border:1px solid #2a2a3a;border-radius:10px;cursor:pointer;padding:10px;text-align:center;transition:0.2s;position:relative;}
-.channel-card:hover{border-color:#e63946;transform:scale(1.02);}
-.channel-card.active{border:2px solid #e63946;}
-.channel-img{height:60px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#8B0000,#B22222);border-radius:8px;margin-bottom:6px;}
-.channel-img img{max-width:80%;max-height:50px;object-fit:contain;}
-.channel-img span{font-size:28px;}
-.ch-name-small{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#ffd166;z-index:1;}
-.count-badge{background:#e63946;border-radius:50px;padding:2px 8px;font-size:11px;margin-left:8px;}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a24;border:1px solid #2a2a3a;padding:8px 16px;border-radius:50px;font-size:12px;z-index:1000;opacity:0;transition:0.3s;pointer-events:none;}
-.toast.show{opacity:1;}
-@media (max-width:600px){.video-container{height:250px;}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TV Hub Premium</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-user-select: none; user-select: none; }
+        input, textarea { -webkit-user-select: text; user-select: text; }
+        body { background-color: #0a0a0a; color: white; position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
+
+        /* TIKTOK - removido bloqueio, funciona normalmente */
+
+        /* BLOQUEIO PC DESATIVADO */
+        #pc-block-screen { display: none !important; }
+
+        /* PLAYER */
+        .player-section { background: #000; position: relative; flex-shrink: 0; width: 100%; aspect-ratio: 16/9; }
+        #videoPlayer { width: 100%; height: 100%; background: #000; object-fit: contain; }
+        .player-controls { position: absolute; bottom: 10px; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .player-section:hover .player-controls { opacity: 1; pointer-events: auto; }
+        .quality-select { background: rgba(0,0,0,0.7); border: 1px solid #444; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .fullscreen-btn { background: rgba(0,0,0,0.7); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .reconnect-status { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 20px; font-size: 11px; color: #ffaa00; z-index: 10; display: none; white-space: nowrap; }
+
+        /* BARRA SUPERIOR */
+        .control-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #111; border-bottom: 1px solid #222; flex-shrink: 0; }
+        .live-tag { color: #ff4444; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+        .live-dot { width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%{opacity:1}50%{opacity:0.3}100%{opacity:1} }
+        #btn-channels { background: #222; color: white; border: 1px solid #444; padding: 6px 15px; border-radius: 25px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+
+        /* ANÚNCIO */
+        #ad-display { background-color: #ffd700; padding: 12px 15px; position: relative; flex-shrink: 0; min-height: 100px; display: flex; align-items: center; gap: 15px; }
+        .ad-content-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; z-index: 2; }
+        #ad-image { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; display: none; border: 2px solid white; }
+        .ad-text { flex: 1; }
+        #ad-title { font-size: 1rem; font-weight: 900; text-transform: uppercase; color: #1a1a1a; margin-bottom: 4px; }
+        #ad-body { font-size: 0.8rem; color: #333; line-height: 1.3; }
+        .btn-visitar { background: #ff4444; color: white; border: none; padding: 6px 15px; font-size: 0.75rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 8px; display: inline-block; }
+        #ad-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 1; display: none; }
+        #btn-delete-ad { display: none; position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; cursor: pointer; z-index: 20; }
+
+        /* CHAT */
+        #chat-container { flex: 1; display: flex; flex-direction: column; background: #0f0f0f; min-height: 0; }
+        #messages-area { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .msg-row { display: flex; gap: 10px; align-items: flex-start; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #4facfe; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; flex-shrink: 0; }
+        .msg-bubble { background: #222; padding: 6px 12px; border-radius: 0 12px 12px 12px; max-width: 80%; }
+        .msg-name { font-weight: bold; color: #4facfe; font-size: 0.75rem; margin-bottom: 2px; }
+        .msg-text { color: #eee; font-size: 0.85rem; word-wrap: break-word; }
+        .btn-delete-msg { background: none; border: none; cursor: pointer; font-size: 0.8rem; opacity: 0.5; padding: 0 5px; color: #ff8888; }
+        .chat-header { display: flex; gap: 8px; padding: 8px 12px; background: #111; border-top: 1px solid #222; align-items: center; flex-wrap: wrap; }
+        .name-input { flex: 1; min-width: 100px; background: #222; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; text-align: center; }
+        .chat-input-wrapper { flex: 3; display: flex; gap: 8px; }
+        .chat-input-wrapper input { flex: 1; padding: 8px 12px; border-radius: 20px; border: none; background: #222; color: white; outline: none; font-size: 0.85rem; }
+        .chat-input-wrapper button { background: #007bff; border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .name-warning { color: #ff8888; font-size: 0.7rem; display: none; width: 100%; text-align: center; padding: 4px; }
+
+        /* ═══════════════════════════════════════
+           MODAL — NAVEGAÇÃO EM 2 NÍVEIS
+        ═══════════════════════════════════════ */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-box { background: #111; width: 100%; max-height: 88vh; border-radius: 24px 24px 0 0; overflow: hidden; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* CABEÇALHO DO MODAL */
+        .modal-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px 12px; border-bottom: 1px solid #222; flex-shrink: 0; }
+        .btn-voltar { background: #222; border: none; color: white; width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: none; align-items: center; justify-content: center; flex-shrink: 0; }
+        .modal-titulo { flex: 1; font-size: 1.1rem; font-weight: bold; color: white; }
+        .close-btn { background: #222; border: none; color: #aaa; width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* BUSCA */
+        .search-wrap { padding: 10px 16px; flex-shrink: 0; }
+        .search-box { width: 100%; background: #222; border: 1px solid #333; color: white; padding: 10px 16px; border-radius: 25px; font-size: 0.9rem; outline: none; -webkit-user-select: text; user-select: text; }
+        .search-box::placeholder { color: #555; }
+
+        /* ── TELA 1: GRADE DE CATEGORIAS ── */
+        #tela-categorias { flex: 1; overflow-y: auto; padding: 12px 16px 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start; }
+        .cat-card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #2a2a4a;
+            border-top: 3px solid var(--cor, #4facfe);
+            border-radius: 14px;
+            padding: 16px 10px 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 90px;
+        }
+        .cat-card:active { transform: scale(0.95); opacity: 0.85; }
+        .cat-emoji {
+            font-size: 1.8rem;
+            line-height: 1;
+            display: block;
+        }
+        .cat-nome {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #eee;
+            line-height: 1.3;
+            word-break: break-word;
+            hyphens: auto;
+        }
+        .cat-qtd {
+            font-size: 0.65rem;
+            color: #aaa;
+            background: rgba(0,0,0,0.4);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* ── TELA 2: LISTA DE CANAIS ── */
+        #tela-canais { flex: 1; overflow-y: auto; padding: 8px 16px 20px; display: none; flex-direction: column; gap: 6px; }
+        .canal-row { display: flex; align-items: center; gap: 12px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 10px 14px; cursor: pointer; transition: all 0.2s; }
+        .canal-row:active { background: #ff4444; transform: scale(0.98); }
+        .canal-row.ativo { background: #0d2a4a; border-color: #4facfe; }
+        .canal-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #2a2a2a; }
+        .canal-logo-placeholder { width: 40px; height: 40px; border-radius: 8px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        .canal-info { flex: 1; overflow: hidden; }
+        .canal-nome { font-size: 0.9rem; font-weight: bold; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .canal-sub { font-size: 0.7rem; color: #666; margin-top: 2px; }
+        .canal-play { color: #4facfe; font-size: 1.2rem; flex-shrink: 0; }
+        .canal-row.ativo .canal-play { color: #ffd700; }
+
+        /* LOADING */
+        .loading-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: #555; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: #4facfe; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ADMIN */
+        #admin-tip { display: none; color: #ff8888; font-size: 0.7rem; text-align: center; padding: 8px; flex-shrink: 0; }
+
+        @media (max-width: 380px) {
+            #tela-categorias { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .cat-card { padding: 12px 8px; }
+            .cat-emoji { font-size: 1.6rem; }
+        }
+        @media (max-width: 768px) {
+            .chat-header { flex-direction: column; }
+            .name-input, .chat-input-wrapper { width: 100%; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">📺 TV Online</div>
-  <input type="text" class="search" id="searchInput" placeholder="Buscar canal...">
+
+
+<div id="pc-block-screen">
+    <div style="font-size:3rem;">🚫</div>
+    <div style="margin-top:10px;">Acesso apenas via celular</div>
 </div>
 
-<div class="player" id="playerSection">
-  <div class="player-header">
-    <span class="live">🔴 AO VIVO</span>
-    <span class="ch-name" id="currentChannelName">Selecione um canal</span>
-    <button class="close-player" onclick="closePlayer()">✕</button>
-  </div>
-  <div class="video-container">
-    <video id="videoPlayer" playsinline></video>
-    <div class="loader" id="loader"><div class="spinner"></div></div>
-    <div class="error-msg" id="errorMsg">
-      <p>❌ Erro ao carregar o stream</p>
-      <button onclick="retryStream()" style="background:#e63946;border:none;padding:8px 16px;border-radius:50px;color:#fff;margin-top:8px;cursor:pointer;">Tentar novamente</button>
+<div class="player-section">
+    <video id="videoPlayer" controls style="width:100%;height:100%;background:#000;"></video>
+    <div class="player-controls">
+        <select id="qualitySelect" class="quality-select">
+            <option value="auto">🎬 Automática</option>
+            <option value="1080p">Full HD</option>
+            <option value="720p">HD</option>
+            <option value="480p">SD</option>
+        </select>
+        <button class="fullscreen-btn" onclick="entrarTelaCheia()">⛶</button>
     </div>
-  </div>
+    <div id="reconnectStatus" class="reconnect-status"></div>
 </div>
 
-<div class="cat-scroll" id="catScroll">
-  <div class="cat-pill active" data-id="all">📺 Todos</div>
-  <div class="cat-pill" data-id="fav">⭐ Favoritos</div>
+<div class="control-bar">
+    <div class="live-tag"><div class="live-dot"></div> AO VIVO</div>
+    <button id="btn-channels" onclick="abrirModal()"><span>📺</span> CANAIS</button>
 </div>
 
-<div id="channelsGrid" class="channels-grid"></div>
-<div class="toast" id="toast"></div>
+<div id="ad-display">
+    <div id="ad-overlay"></div>
+    <button id="btn-delete-ad" onclick="event.stopPropagation();limparBanner()">🗑️</button>
+    <div class="ad-content-wrapper">
+        <img id="ad-image" src="">
+        <div class="ad-text">
+            <div id="ad-title">🔥 SEU ANÚNCIO AQUI 🔥</div>
+            <div id="ad-body"></div>
+            <button id="btn-visitar-anuncio" class="btn-visitar" onclick="event.stopPropagation();abrirLinkAnuncio()">🔗 CLIQUE PARA VER</button>
+        </div>
+    </div>
+</div>
+
+<div id="chat-container">
+    <div class="chat-header">
+        <input type="text" id="chat-name" class="name-input" placeholder="Seu nome *" maxlength="20">
+        <div class="chat-input-wrapper">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." disabled>
+            <button onclick="enviarMensagem()" disabled>Enviar</button>
+        </div>
+        <div id="name-warning" class="name-warning">⚠️ Digite seu nome para participar do chat</div>
+    </div>
+    <div id="messages-area">
+        <div style="color:#4facfe;text-align:center;padding:20px;">💬 Digite seu nome para começar</div>
+    </div>
+</div>
+
+<!-- MODAL COM 2 TELAS -->
+<div id="modal-channels" class="modal-overlay" onclick="fecharModalFora(event)">
+    <div class="modal-box">
+
+        <!-- Cabeçalho -->
+        <div class="modal-header">
+            <button class="btn-voltar" id="btn-voltar" onclick="voltarCategorias()">←</button>
+            <div class="modal-titulo" id="modal-titulo">📺 Categorias</div>
+            <button class="close-btn" onclick="fecharModal()">✕</button>
+        </div>
+
+        <!-- Busca (só aparece na tela de canais) -->
+        <div class="search-wrap" id="search-wrap" style="display:none;">
+            <input type="text" class="search-box" id="search-canais" placeholder="🔍 Buscar canal..." oninput="filtrarCanais(this.value)">
+        </div>
+
+        <!-- Tela 1: Categorias -->
+        <div id="tela-categorias">
+            <div class="loading-box" style="grid-column:span 2;">
+                <div class="spinner"></div>
+                <span>Carregando categorias...</span>
+            </div>
+        </div>
+
+        <!-- Tela 2: Canais da categoria -->
+        <div id="tela-canais"></div>
+
+        <div id="admin-tip">🔧 Admin ativo — toque longo para editar</div>
+    </div>
+</div>
 
 <script>
-// ========== CONFIGURAÇÃO ==========
-const USERNAME = 'f498c3d8e591bfcf632385adb022e6cb';
-const PASSWORD = '35fadad7f6af80b732c2';
-const PROXY = 'player.php?url=';
+// ============================================================
+// CONFIG
+// ============================================================
+const ADMIN_SENHA  = "admin123";
 
-let allChannels = [];
-let categories = {};
-let favorites = JSON.parse(localStorage.getItem('tvFavs') || '[]');
-let currentCategory = 'all';
-let currentChannel = null;
-let hls = null;
-let retryCount = 0;
+// ── SERVIDOR MEGAPLAY (capturado via PCAPdroid) ──────────────
+const MEGAPLAY_HOST  = "https://server.webcontent06.fun";
+const MEGAPLAY_USER  = "bsaY9bFG4u";
+const MEGAPLAY_TOKEN = "p81Bo6uladHqZ1";
 
-// ========== FUNÇÕES PRINCIPAIS ==========
-async function init() {
-  showToast('📡 Carregando canais...');
-  await loadCategories();
-  await loadChannels();
+// Possíveis URLs da API — tenta uma por uma
+const API_URLS = [
+    `${MEGAPLAY_HOST}/megaplay/${MEGAPLAY_USER}/player_api.php`,
+    `${MEGAPLAY_HOST}/player_api.php?username=${MEGAPLAY_USER}&password=${MEGAPLAY_TOKEN}`,
+    `${MEGAPLAY_HOST}/api/list?token=${MEGAPLAY_TOKEN}`,
+];
+
+const IPTV_STREAM = `${MEGAPLAY_HOST}/megaplay/${MEGAPLAY_USER}`;
+// ─────────────────────────────────────────────────────────────
+
+// Monta URL do stream com token
+function urlStream(streamId) {
+    return `${IPTV_STREAM}/${streamId}.m3u8?token=${MEGAPLAY_TOKEN}`;
 }
 
-async function loadCategories() {
-  try {
-    const url = `http://bluebox.click/player_api.php?username=${USERNAME}&password=${PASSWORD}&action=get_live_categories`;
-    const response = await fetch(PROXY + encodeURIComponent(url));
-    const data = await response.json();
-    if (Array.isArray(data)) {
-      data.forEach(c => { categories[c.category_id] = c.category_name; });
-      renderCategories();
+// Sem proxy — conecta direto com token
+function urlComProxy(url) { return url; }
+function proximoProxy() { return false; }
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAF4yj24_saWg-F52-ymkzdTakbPxV8al8",
+    authDomain: "game-d2947.firebaseapp.com",
+    databaseURL: "https://game-d2947-default-rtdb.firebaseio.com",
+    projectId: "game-d2947",
+    storageBucket: "game-d2947.firebasestorage.app",
+    messagingSenderId: "770400120649",
+    appId: "1:770400120649:web:169c86de3c01b92b753498"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ============================================================
+// DADOS
+// ============================================================
+let canaisPorCategoria = {};
+let todosCanais        = [];
+let canalAtivo         = null;
+let catAtual           = null;
+let isAdmin            = false;
+
+// Cores e emojis automáticos por nome de categoria
+const CAT_TEMAS = [
+    { palavras: ['esport','futebol','sport','bola','fifa','nba','ufc','combate','espn'],  cor: '#00c853', emoji: '⚽' },
+    { palavras: ['filme','cinema','hbo','telecine','tnt','warner','megapix','séri','serie'], cor: '#ff6d00', emoji: '🎬' },
+    { palavras: ['notic','news','jornal','cnn','band news','globo news'],                  cor: '#2196f3', emoji: '📰' },
+    { palavras: ['music','mtv','multishow','clip'],                                        cor: '#e040fb', emoji: '🎵' },
+    { palavras: ['infant','kids','cartoon','disney','nickelodeon','gloob'],               cor: '#ffeb3b', emoji: '🐱' },
+    { palavras: ['document','discovery','history','nat geo','animal'],                    cor: '#00bcd4', emoji: '🌍' },
+    { palavras: ['religi','gospel','cristão','vida','universal','record'],                 cor: '#ff8f00', emoji: '⛪' },
+    { palavras: ['variedade','entretenimento','comedy','humor'],                           cor: '#f06292', emoji: '🎭' },
+    { palavras: ['aberta','globo','sbt','band','rede','cultura','brasil'],                 cor: '#26c6da', emoji: '📺' },
+];
+
+function temaCategoria(nome) {
+    const n = nome.toLowerCase();
+    for (let t of CAT_TEMAS) {
+        if (t.palavras.some(p => n.includes(p))) return t;
     }
-  } catch(e) {
-    console.log('Categorias:', e);
-  }
+    return { cor: '#4facfe', emoji: '📡' };
 }
 
-async function loadChannels() {
-  try {
-    const url = `http://bluebox.click/player_api.php?username=${USERNAME}&password=${PASSWORD}&action=get_live_streams`;
-    const response = await fetch(PROXY + encodeURIComponent(url));
-    allChannels = await response.json();
-    console.log(`✅ ${allChannels.length} canais carregados`);
-    showToast(`✅ ${allChannels.length} canais`);
-    renderChannels();
-    
-    // Seleciona primeiro canal automaticamente
-    if (allChannels.length > 0 && !currentChannel) {
-      setTimeout(() => selectChannel(allChannels[0]), 500);
-    }
-  } catch(e) {
-    console.error('Erro:', e);
-    showToast('❌ Erro ao carregar canais');
-  }
-}
+// ============================================================
+// CARREGAR API IPTV
+// ============================================================
+async function carregarIPTV() {
+    // Tenta cada URL da API até uma funcionar
+    let categorias = null;
+    let streams = null;
+    let erros = [];
 
-function renderCategories() {
-  const container = document.getElementById('catScroll');
-  const extra = Object.entries(categories).map(([id, name]) => 
-    `<div class="cat-pill" data-id="${id}" onclick="filterByCategory('${id}')">${escapeHtml(name)}</div>`
-  ).join('');
-  container.innerHTML = `
-    <div class="cat-pill active" data-id="all" onclick="filterByCategory('all')">📺 Todos</div>
-    <div class="cat-pill" data-id="fav" onclick="filterByCategory('fav')">⭐ Favoritos</div>
-    ${extra}
-  `;
-}
+    for (const apiUrl of API_URLS) {
+        try {
+            const urlCat = `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}action=get_live_categories&token=${MEGAPLAY_TOKEN}`;
+            const urlStr = `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}action=get_live_streams&token=${MEGAPLAY_TOKEN}`;
 
-function renderChannels() {
-  let list = [...allChannels];
-  
-  if (currentCategory === 'fav') {
-    list = list.filter(c => favorites.includes(String(c.stream_id)));
-  } else if (currentCategory !== 'all') {
-    list = list.filter(c => String(c.category_id) === currentCategory);
-  }
-  
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  if (searchTerm) {
-    list = list.filter(c => c.name.toLowerCase().includes(searchTerm));
-  }
-  
-  const grid = document.getElementById('channelsGrid');
-  
-  if (!list.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">📡 Nenhum canal encontrado</div>';
-    return;
-  }
-  
-  grid.innerHTML = list.map(ch => {
-    const isFav = favorites.includes(String(ch.stream_id));
-    const isActive = currentChannel && currentChannel.stream_id == ch.stream_id;
-    const logo = ch.stream_icon && ch.stream_icon !== 'flussonic' ? ch.stream_icon : null;
-    
-    return `
-      <div class="channel-card ${isActive ? 'active' : ''}" onclick="selectChannel(${ch.stream_id})">
-        <div class="fav-btn" onclick="event.stopPropagation();toggleFavorite(${ch.stream_id})">${isFav ? '★' : '☆'}</div>
-        <div class="channel-img">
-          ${logo ? `<img src="${logo}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;">📺</span>` : '<span>📺</span>'}
-        </div>
-        <div class="ch-name-small">${escapeHtml(ch.name.substring(0, 22))}</div>
-      </div>
-    `;
-  }).join('');
-}
+            console.log('Tentando API:', apiUrl);
 
-// ========== PLAYER ==========
-async function selectChannel(streamId) {
-  const channel = allChannels.find(c => c.stream_id == streamId);
-  if (!channel) return;
-  
-  currentChannel = channel;
-  retryCount = 0;
-  
-  document.getElementById('currentChannelName').textContent = channel.name;
-  document.getElementById('errorMsg').classList.remove('show');
-  renderChannels();
-  
-  // Constrói URL do stream via proxy
-  const streamUrl = `http://bluebox.click/live/${USERNAME}/${PASSWORD}/${channel.stream_id}`;
-  const proxyUrl = PROXY + encodeURIComponent(streamUrl);
-  
-  console.log('🎬 Stream:', proxyUrl);
-  showToast(`▶️ ${channel.name}`);
-  playStream(proxyUrl);
-}
+            const [resCat, resStr] = await Promise.all([
+                fetch(urlCat),
+                fetch(urlStr)
+            ]);
 
-function playStream(url) {
-  const video = document.getElementById('videoPlayer');
-  const loader = document.getElementById('loader');
-  const errorDiv = document.getElementById('errorMsg');
-  
-  loader.classList.add('show');
-  errorDiv.classList.remove('show');
-  
-  if (hls) {
-    hls.destroy();
-    hls = null;
-  }
-  
-  video.pause();
-  video.src = '';
-  
-  if (Hls.isSupported()) {
-    hls = new Hls({
-      enableWorker: false,
-      lowLatencyMode: true,
-      maxBufferLength: 30
-    });
-    
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(e => console.log('Autoplay:', e));
-      loader.classList.remove('show');
-      retryCount = 0;
-    });
-    
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) {
-        console.error('HLS Error:', data);
-        loader.classList.remove('show');
-        
-        if (retryCount < 2) {
-          retryCount++;
-          showToast(`🔄 Tentando novamente (${retryCount}/2)...`);
-          setTimeout(() => playStream(url), 2000);
-        } else {
-          errorDiv.classList.add('show');
+            const catData = await resCat.json();
+            const strData = await resStr.json();
+
+            // Verifica se veio dados válidos
+            if (Array.isArray(catData) && Array.isArray(strData) && strData.length > 0) {
+                categorias = catData;
+                streams = strData;
+                console.log('✅ API funcionou:', apiUrl);
+                break;
+            }
+        } catch (e) {
+            erros.push(e.message);
+            console.warn('API falhou:', e.message);
         }
-      }
+    }
+
+    if (!streams || streams.length === 0) {
+        document.getElementById('tela-categorias').innerHTML =
+            `<div class="loading-box" style="grid-column:span 2;">
+                <div style="font-size:2rem;">❌</div>
+                <div style="color:#ff8888;">Erro ao carregar canais</div>
+                <div style="color:#666;font-size:0.75rem;margin-top:8px;">${erros.join(' | ')}</div>
+                <button onclick="carregarIPTV()" style="background:#ff4444;color:white;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;margin-top:12px;">🔄 Tentar novamente</button>
+            </div>`;
+        return;
+    }
+
+    try {
+        const mapaCategoria = {};
+        categorias.forEach(c => { mapaCategoria[c.category_id] = c.category_name; });
+
+        canaisPorCategoria = {};
+        todosCanais = [];
+
+        streams.forEach(s => {
+            const catNome = mapaCategoria[s.category_id] || "Outros";
+            const canal = {
+                nome: s.name,
+                url: urlStream(s.stream_id),
+                logo: s.stream_icon || "",
+                id: String(s.stream_id),
+                categoria: catNome
+            };
+            if (!canaisPorCategoria[catNome]) canaisPorCategoria[catNome] = [];
+            canaisPorCategoria[catNome].push(canal);
+            todosCanais.push(canal);
+        });
+
+        renderCategorias();
+
+        if (todosCanais.length > 0) {
+            setTimeout(() => loadChannel(todosCanais[0].url, todosCanais[0].nome), 800);
+        }
+    } catch (err) {
+        console.error('Erro geral:', err);
+        document.getElementById('tela-categorias').innerHTML =
+            `<div class="loading-box" style="grid-column:span 2;">
+                <div style="font-size:2rem;">❌</div>
+                <div style="color:#ff8888;">Erro ao carregar</div>
+                <div style="color:#666;font-size:0.75rem;">${err.message}</div>
+                <button onclick="carregarIPTV()" style="background:#ff4444;color:white;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;margin-top:8px;">🔄 Tentar novamente</button>
+            </div>`;
+    }
+}
+
+// ============================================================
+// TELA 1 — GRADE DE CATEGORIAS
+// ============================================================
+function renderCategorias() {
+    const container = document.getElementById('tela-categorias');
+    container.innerHTML = '';
+
+    const cats = Object.keys(canaisPorCategoria).sort();
+
+    cats.forEach(cat => {
+        const tema = temaCategoria(cat);
+        const qtd  = canaisPorCategoria[cat].length;
+
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+        card.style.setProperty('--cor', tema.cor);
+        card.innerHTML = `
+            <div class="cat-emoji">${tema.emoji}</div>
+            <div class="cat-nome">${cat}</div>
+            <div class="cat-qtd">${qtd} canais</div>`;
+        card.onclick = () => abrirCategoria(cat);
+        container.appendChild(card);
     });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = url;
-    video.addEventListener('loadedmetadata', () => {
-      video.play().catch(e => console.log('Autoplay:', e));
-      loader.classList.remove('show');
-    }, { once: true });
-    video.addEventListener('error', () => {
-      loader.classList.remove('show');
-      errorDiv.classList.add('show');
-    }, { once: true });
-  } else {
-    loader.classList.remove('show');
-    errorDiv.classList.add('show');
-    showToast('❌ Navegador não suporta HLS');
-  }
+
+    // Card Admin
+    const adminCard = document.createElement('div');
+    adminCard.className = 'cat-card';
+    adminCard.style.setProperty('--cor', '#ff4444');
+    adminCard.innerHTML = `<div class="cat-emoji">👑</div><div class="cat-nome">Área Admin</div><div class="cat-qtd">${isAdmin ? 'Ativo' : 'Entrar'}</div>`;
+    adminCard.onclick = loginAdmin;
+    container.appendChild(adminCard);
 }
 
-function retryStream() {
-  if (!currentChannel) return;
-  retryCount = 0;
-  const streamUrl = `http://bluebox.click/live/${USERNAME}/${PASSWORD}/${currentChannel.stream_id}`;
-  playStream(PROXY + encodeURIComponent(streamUrl));
+// ============================================================
+// TELA 2 — LISTA DE CANAIS DA CATEGORIA
+// ============================================================
+function abrirCategoria(cat) {
+    catAtual = cat;
+    document.getElementById('tela-categorias').style.display = 'none';
+    document.getElementById('tela-canais').style.display    = 'flex';
+    document.getElementById('search-wrap').style.display    = 'block';
+    document.getElementById('btn-voltar').style.display     = 'flex';
+    document.getElementById('modal-titulo').textContent     = cat;
+    document.getElementById('search-canais').value = '';
+
+    renderCanais(canaisPorCategoria[cat] || []);
 }
 
-function closePlayer() {
-  if (hls) {
-    hls.destroy();
-    hls = null;
-  }
-  document.getElementById('videoPlayer').src = '';
-  document.getElementById('currentChannelName').textContent = 'Selecione um canal';
-  currentChannel = null;
+function renderCanais(lista) {
+    const container = document.getElementById('tela-canais');
+    container.innerHTML = '';
+
+    if (lista.length === 0) {
+        container.innerHTML = '<div class="loading-box"><div style="font-size:2rem;">🔍</div><span style="color:#555;">Nenhum canal encontrado</span></div>';
+        return;
+    }
+
+    lista.forEach(canal => {
+        const row = document.createElement('div');
+        row.className = 'canal-row' + (canalAtivo === canal.url ? ' ativo' : '');
+        row.dataset.url = canal.url;
+
+        const logoHtml = canal.logo
+            ? `<img class="canal-logo" src="${canal.logo}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="canal-logo-placeholder" style="display:none;">📺</div>`
+            : `<div class="canal-logo-placeholder">📺</div>`;
+
+        row.innerHTML = `
+            ${logoHtml}
+            <div class="canal-info">
+                <div class="canal-nome">${canal.nome}</div>
+                <div class="canal-sub">${canal.categoria}</div>
+            </div>
+            <span class="canal-play">${canalAtivo === canal.url ? '▶' : '›'}</span>`;
+
+        row.onclick = () => selecionarCanal(canal.url, canal.nome);
+
+        if (isAdmin) {
+            row.oncontextmenu = (e) => {
+                e.preventDefault();
+                let novoLink = prompt(`Editar link de "${canal.nome}":`, canal.url);
+                if (novoLink && novoLink.includes('.m3u8')) {
+                    canal.url = novoLink;
+                    alert("Link atualizado!");
+                    renderCanais(canaisPorCategoria[catAtual]);
+                }
+            };
+        }
+
+        container.appendChild(row);
+    });
 }
 
-// ========== FAVORITOS ==========
-function toggleFavorite(streamId) {
-  const sid = String(streamId);
-  const idx = favorites.indexOf(sid);
-  
-  if (idx === -1) {
-    favorites.push(sid);
-    showToast('⭐ Adicionado aos favoritos');
-  } else {
-    favorites.splice(idx, 1);
-    showToast('🗑️ Removido dos favoritos');
-  }
-  
-  localStorage.setItem('tvFavs', JSON.stringify(favorites));
-  renderChannels();
+function filtrarCanais(query) {
+    if (!catAtual) return;
+    const base = canaisPorCategoria[catAtual] || [];
+    if (!query.trim()) { renderCanais(base); return; }
+    const q = query.toLowerCase();
+    renderCanais(base.filter(c => c.nome.toLowerCase().includes(q)));
 }
 
-// ========== FILTROS ==========
-function filterByCategory(categoryId) {
-  currentCategory = categoryId;
-  
-  document.querySelectorAll('.cat-pill').forEach(pill => {
-    pill.classList.toggle('active', pill.dataset.id === categoryId);
-  });
-  
-  renderChannels();
+function voltarCategorias() {
+    catAtual = null;
+    document.getElementById('tela-canais').style.display    = 'none';
+    document.getElementById('tela-categorias').style.display= 'grid';
+    document.getElementById('search-wrap').style.display    = 'none';
+    document.getElementById('btn-voltar').style.display     = 'none';
+    document.getElementById('modal-titulo').textContent     = '📺 Categorias';
+    document.getElementById('search-canais').value          = '';
 }
 
-// Busca ao vivo
-document.getElementById('searchInput').addEventListener('input', () => renderChannels());
-
-// ========== UTILIDADES ==========
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+function selecionarCanal(url, nome) {
+    canalAtivo = url;
+    loadChannel(url, nome);
+    fecharModal();
+    document.querySelectorAll('.canal-row').forEach(el => {
+        el.classList.toggle('ativo', el.dataset.url === url);
+        el.querySelector('.canal-play').textContent = el.dataset.url === url ? '▶' : '›';
+    });
 }
 
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+// ============================================================
+// MODAL OPEN / CLOSE
+// ============================================================
+function abrirModal() {
+    const modal = document.getElementById('modal-channels');
+    modal.style.display = 'flex';
+    voltarCategorias(); // sempre começa nas categorias
 }
 
-// Iniciar
-init();
+function fecharModal() {
+    document.getElementById('modal-channels').style.display = 'none';
+}
+
+function fecharModalFora(e) {
+    if (e.target === document.getElementById('modal-channels')) fecharModal();
+}
+
+// ============================================================
+// TIKTOK / BLOQUEIO PC
+// ============================================================
+// TikTok permitido — sem bloqueio
+
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// BLOQUEIO PC TEMPORARIAMENTE DESATIVADO PARA DEBUG
+// if (!isMobile) {
+//     document.getElementById('pc-block-screen').style.display = 'flex';
+//     document.querySelector('.player-section').style.display  = 'none';
+// }
+// BLOQUEIO DE TECLADO DESATIVADO PARA DEBUG
+// document.addEventListener('keydown', e => { ... })
+// document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ============================================================
+// PLAYER HLS
+// ============================================================
+let hls=null, currentUrl='', currentChannelName='', availableLevels=[], reconnectAttempts=0, isReconnecting=false;
+
+function showStatus(msg) {
+    let s = document.getElementById('reconnectStatus');
+    s.textContent = msg; s.style.display = 'block';
+    setTimeout(() => { if(s.textContent===msg) s.style.display='none'; }, 3000);
+}
+
+function setQuality(q) {
+    if (!hls) return;
+    const map = {'1080p':3,'720p':2,'480p':1,'auto':-1};
+    let t = map[q];
+    if (t===-1) { hls.autoLevelCapping=-1; showStatus('🎬 Automático'); }
+    else if (availableLevels[t]) { hls.currentLevel=t; showStatus(`🎬 ${q}`); }
+}
+
+function reconnect() {
+    if (isReconnecting||!currentUrl) return;
+    isReconnecting=true; reconnectAttempts++;
+    showStatus(`🔄 Reconectando (${reconnectAttempts})...`);
+    loadChannel(currentUrl, currentChannelName);
+    setTimeout(()=>{ isReconnecting=false; }, 3000);
+}
+
+function loadChannel(url, name) {
+    if (!url) return;
+    currentUrl = url; currentChannelName = name;
+    const video = document.getElementById('videoPlayer');
+    if (hls) { hls.destroy(); hls = null; }
+
+    const streamUrl = urlComProxy(url);
+
+    if (Hls.isSupported()) {
+        hls = new Hls({ enableWorker:true, lowLatencyMode:true, debug:false, manifestLoadingTimeOut:10000, manifestLoadingMaxRetry:2, startLevel:-1 });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, (e, d) => {
+            availableLevels = d.levels;
+            setQuality(document.getElementById('qualitySelect').value);
+            showStatus('✅ Conectado!');
+            reconnectAttempts = 0;
+            video.play().catch(()=>{});
+        });
+        hls.on(Hls.Events.ERROR, (e, d) => {
+            if (d.fatal) {
+                if (proximoProxy()) {
+                    loadChannel(currentUrl, currentChannelName);
+                } else {
+                    proxyAtual = 0;
+                    reconnect();
+                }
+            }
+        });
+        video.onended   = () => reconnect();
+        video.onstalled = () => reconnect();
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.load();
+        video.play().catch(()=>{});
+        video.onended = () => reconnect();
+    }
+}
+
+function entrarTelaCheia() {
+    let v=document.getElementById('videoPlayer');
+    if(v.requestFullscreen) v.requestFullscreen();
+    else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+}
+
+document.getElementById('qualitySelect').addEventListener('change', e => { if(hls) setQuality(e.target.value); });
+
+// ============================================================
+// ADMIN
+// ============================================================
+function checkAdmin() {
+    if (localStorage.getItem('tv_admin')===ADMIN_SENHA) {
+        isAdmin=true;
+        document.getElementById('admin-tip').style.display='block';
+        document.getElementById('btn-delete-ad').style.display='flex';
+    }
+}
+
+function loginAdmin() {
+    if (isAdmin) {
+        if (confirm("Sair do modo admin?")) {
+            localStorage.removeItem('tv_admin'); isAdmin=false;
+            document.getElementById('admin-tip').style.display='none';
+            renderCategorias(); alert("Admin desativado.");
+        }
+        return;
+    }
+    let senha = prompt("Senha de administrador:");
+    if (senha===ADMIN_SENHA) {
+        localStorage.setItem('tv_admin', ADMIN_SENHA); isAdmin=true;
+        document.getElementById('admin-tip').style.display='block';
+        document.getElementById('btn-delete-ad').style.display='flex';
+        alert("Modo admin ativado!"); renderCategorias();
+    } else { alert("Senha incorreta!"); }
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+let userName = localStorage.getItem('chat_name') || '';
+if (userName) { document.getElementById('chat-name').value=userName; habilitarChat(true); }
+else habilitarChat(false);
+
+function habilitarChat(hab) {
+    let inp=document.getElementById('chat-input'), btn=document.querySelector('.chat-input-wrapper button');
+    inp.disabled=!hab; btn.disabled=!hab;
+    inp.placeholder = hab ? "Digite sua mensagem..." : "Digite seu nome para participar";
+    document.getElementById('name-warning').style.display = hab?'none':'block';
+}
+
+document.getElementById('chat-name').addEventListener('change', function() {
+    let nome=this.value.trim();
+    if(nome) { userName=nome.substring(0,20); localStorage.setItem('chat_name',userName); habilitarChat(true); }
+    else { userName=''; localStorage.removeItem('chat_name'); habilitarChat(false); }
+});
+
+function enviarMensagem() {
+    if(!userName){alert("Digite seu nome primeiro!");return;}
+    let inp=document.getElementById('chat-input'), texto=inp.value.trim();
+    if(!texto)return;
+    db.ref('tv_chat_messages').push({nome:userName,texto:texto,timestamp:Date.now()});
+    inp.value="";
+}
+
+function deletarMsg(key) { if(isAdmin&&confirm("Apagar?")) db.ref('tv_chat_messages/'+key).remove(); }
+
+function carregarChat() {
+    db.ref('tv_chat_messages').limitToLast(50).on('child_added', snap => {
+        let msg=snap.val(), div=document.createElement('div');
+        div.className='msg-row'; div.id='msg-'+snap.key;
+        let del=isAdmin?`<button class="btn-delete-msg" onclick="deletarMsg('${snap.key}')">🗑️</button>`:"";
+        div.innerHTML=`<div class="avatar">${msg.nome.charAt(0).toUpperCase()}</div>
+            <div class="msg-bubble"><span class="msg-name">${msg.nome}</span><span class="msg-text">${msg.texto}</span></div>${del}`;
+        document.getElementById('messages-area').appendChild(div);
+        document.getElementById('messages-area').scrollTop=99999;
+    });
+    db.ref('tv_chat_messages').on('child_removed', s => {
+        let el=document.getElementById('msg-'+s.key); if(el)el.remove();
+    });
+}
+
+document.getElementById('chat-input').addEventListener('keypress', e => { if(e.key==='Enter'&&userName) enviarMensagem(); });
+
+// ============================================================
+// BANNER ANÚNCIO
+// ============================================================
+let bannerAtual=null, linkAtual="";
+
+function carregarBanner() {
+    db.ref('tv_current_ad').on('value', snap => {
+        bannerAtual=snap.val();
+        if(bannerAtual&&Date.now()<bannerAtual.expiraEm) {
+            atualizarBanner(bannerAtual);
+            if(isAdmin) document.getElementById('btn-delete-ad').style.display='flex';
+        } else {
+            document.getElementById('ad-image').style.display='none';
+            document.getElementById('ad-title').innerText="🔥 ESPAÇO PARA ANÚNCIO 🔥";
+            document.getElementById('ad-body').innerHTML="Anuncie aqui!";
+            document.getElementById('ad-display').style.backgroundColor="#ffd700";
+            linkAtual="";
+            document.getElementById('btn-delete-ad').style.display='none';
+            document.getElementById('btn-visitar-anuncio').style.display='none';
+        }
+    });
+}
+
+function atualizarBanner(ad) {
+    document.getElementById('ad-title').innerText=ad.titulo;
+    document.getElementById('ad-body').innerHTML=ad.descricao;
+    linkAtual=ad.link||"";
+    document.getElementById('btn-visitar-anuncio').style.display=linkAtual?'inline-block':'none';
+    if(ad.imagem){let img=document.getElementById('ad-image');img.src=ad.imagem;img.style.display="block";document.getElementById('ad-overlay').style.display='block';}
+    else{document.getElementById('ad-image').style.display='none';document.getElementById('ad-overlay').style.display='none';}
+    document.getElementById('ad-display').style.backgroundColor=ad.cor||"#ffd700";
+}
+
+function abrirLinkAnuncio() { if(linkAtual) window.open(linkAtual,'_blank'); }
+function limparBanner() { if(isAdmin&&confirm("Remover anúncio?")) db.ref('tv_current_ad').remove(); }
+setInterval(()=>{ if(bannerAtual&&Date.now()>=bannerAtual.expiraEm) db.ref('tv_current_ad').remove(); },1000);
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+    checkAdmin();
+    carregarChat();
+    carregarBanner();
+    carregarIPTV();
+};
 </script>
 </body>
 </html>
